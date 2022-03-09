@@ -1,11 +1,11 @@
-module github.com/kolesa-team/xoptions/opentelemetry
+module github.com/kolesa-team/servicectx/opentelemetry
 
 go 1.17
 
-replace github.com/kolesa-team/xoptions => ../
+replace github.com/kolesa-team/servicectx => ../
 
 require (
-	github.com/kolesa-team/xoptions v0.0.0-00010101000000-000000000000
+	github.com/kolesa-team/servicectx v0.0.0-00010101000000-000000000000
 	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/otel v1.4.1
 )

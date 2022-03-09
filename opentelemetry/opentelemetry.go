@@ -1,11 +1,11 @@
 package opentelemetry
 
 import (
-	"github.com/kolesa-team/xoptions"
+	"github.com/kolesa-team/servicectx"
 	"go.opentelemetry.io/otel/baggage"
 )
 
-func CreateBaggageMembers(opts xoptions.Options) []baggage.Member {
+func CreateBaggageMembers(opts servicectx.Options) []baggage.Member {
 	var result []baggage.Member
 
 	for key, value := range opts.HeaderMap() {
@@ -20,7 +20,7 @@ func CreateBaggageMembers(opts xoptions.Options) []baggage.Member {
 	return result
 }
 
-func InjectIntoBaggage(bag baggage.Baggage, opts xoptions.Options) baggage.Baggage {
+func InjectIntoBaggage(bag baggage.Baggage, opts servicectx.Options) baggage.Baggage {
 	for _, member := range CreateBaggageMembers(opts) {
 		bag, _ = bag.SetMember(member)
 	}
@@ -28,11 +28,11 @@ func InjectIntoBaggage(bag baggage.Baggage, opts xoptions.Options) baggage.Bagga
 	return bag
 }
 
-func FromBaggage(bag baggage.Baggage) xoptions.Options {
-	opts := xoptions.New()
+func FromBaggage(bag baggage.Baggage) servicectx.Options {
+	opts := servicectx.New()
 
 	for _, member := range bag.Members() {
-		serviceName, option, ok := xoptions.ParseOptionName(member.Key())
+		serviceName, option, ok := servicectx.ParseOptionName(member.Key())
 		if !ok {
 			continue
 		}

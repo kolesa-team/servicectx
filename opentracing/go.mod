@@ -1,11 +1,11 @@
-module github.com/kolesa-team/xoptions/xopentracing
+module github.com/kolesa-team/servicectx/opentracing
 
 go 1.17
 
-replace github.com/kolesa-team/xoptions => ../
+replace github.com/kolesa-team/servicectx => ../
 
 require (
-	github.com/kolesa-team/xoptions v0.0.0-00010101000000-000000000000
+	github.com/kolesa-team/servicectx v0.0.0-00010101000000-000000000000
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.7.0
 )

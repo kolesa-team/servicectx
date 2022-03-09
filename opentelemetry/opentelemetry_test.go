@@ -3,7 +3,7 @@ package opentelemetry
 import (
 	"context"
 	"fmt"
-	"github.com/kolesa-team/xoptions"
+	"github.com/kolesa-team/servicectx"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/propagation"
@@ -13,7 +13,7 @@ import (
 
 func TestInjectIntoBaggage(t *testing.T) {
 	bag := baggage.Baggage{}
-	opts := xoptions.New()
+	opts := servicectx.New()
 	opts.Set("a", "version", "1.0")
 	opts.Set("b", "branch", "feature-123")
 
@@ -25,7 +25,7 @@ func TestInjectIntoBaggage(t *testing.T) {
 
 func TestFromBaggage(t *testing.T) {
 	bag := baggage.Baggage{}
-	inputOpts := xoptions.New()
+	inputOpts := servicectx.New()
 	inputOpts.Set("a", "version", "1.0")
 	inputOpts.Set("b", "branch", "feature-123")
 	bag = InjectIntoBaggage(bag, inputOpts)
@@ -56,7 +56,7 @@ func ExampleFromBaggage() {
 }
 
 func ExampleInjectIntoBaggage() {
-	inputOpts := xoptions.New()
+	inputOpts := servicectx.New()
 	inputOpts.Set("a", "version", "1.0")
 	inputOpts.Set("b", "branch", "feature-123")
 

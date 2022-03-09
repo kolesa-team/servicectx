@@ -3,7 +3,7 @@ package opentelemetry
 import (
 	"context"
 	"fmt"
-	"github.com/kolesa-team/xoptions"
+	"github.com/kolesa-team/servicectx"
 	"go.opentelemetry.io/otel/baggage"
 	"go.opentelemetry.io/otel/propagation"
 	"io/ioutil"
@@ -13,7 +13,7 @@ import (
 
 // An an example HTTP client and server exchanging inter-service options through opentelemetry baggage
 func ExampleBaggage() {
-	options := xoptions.New()
+	options := servicectx.New()
 	options.Set("api", "url", "http://my-custom-api")
 
 	propagator := propagation.TextMapPropagator(propagation.Baggage{})
@@ -34,7 +34,7 @@ func ExampleBaggage() {
 		// but inter-service options are passed in `ctx` as an ancillary data.
 		remoteCall := func(ctx context.Context, username string) string {
 			// inter-service options are retrieved from a context
-			opts := xoptions.FromContext(ctx)
+			opts := servicectx.FromContext(ctx)
 			// the remote API address is taken from these options (or default URL is used instead).
 			url := opts.Get("api", "url", "http://api")
 			url += "?username=" + username

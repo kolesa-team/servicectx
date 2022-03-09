@@ -1,4 +1,4 @@
-package xoptions
+package servicectx
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 
 type contextKey string
 
-const contextKeyOptions = contextKey("xoptions")
+const contextKeyOptions = contextKey("servicectx")
 
 // FromContext returns options from context.
 // If there are no options in the context, an empty struct is returned.

@@ -1,6 +1,6 @@
-// Package xoptions allows to easily exchange arbitrary options across microservices via HTTP headers.
+// Package servicectx allows to easily exchange arbitrary options across microservices via HTTP headers.
 // It handles parsing, reading, and writing the options to/from http.Header, and passing them through `context`.
-package xoptions
+package servicectx
 
 import (
 	"net/http"
@@ -15,7 +15,7 @@ type Values map[string]string
 // Options grouped by a service name
 type Options map[string]Values
 
-// NamePrefix a prefix at the beginning of an inter-service option
+// NamePrefix a prefix at the beginning of a servicectx option
 const NamePrefix = "x-service"
 
 // ParseOptionName parses a string like "x-service-api-branch" into service name ("api"),

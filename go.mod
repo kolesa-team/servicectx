@@ -1,4 +1,4 @@
-module github.com/kolesa-team/xoptions
+module github.com/kolesa-team/servicectx
 
 go 1.17
 

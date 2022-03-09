@@ -1,14 +1,14 @@
 package opentracing
 
 import (
-	"github.com/kolesa-team/xoptions"
+	"github.com/kolesa-team/servicectx"
 	"github.com/opentracing/opentracing-go/mocktracer"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestInjectIntoSpan(t *testing.T) {
-	opts := xoptions.New()
+	opts := servicectx.New()
 	opts.Set("a", "version", "1.0")
 	opts.Set("b", "branch", "feature-123")
 
@@ -20,7 +20,7 @@ func TestInjectIntoSpan(t *testing.T) {
 }
 
 func TestFromSpan(t *testing.T) {
-	inputOpts := xoptions.New()
+	inputOpts := servicectx.New()
 	inputOpts.Set("a", "version", "1.0")
 	inputOpts.Set("b", "branch", "feature-123")
 	span := &mocktracer.MockSpan{}
