@@ -17,12 +17,12 @@ func TestFromContext(t *testing.T) {
 	)
 }
 
-func TestOptions_AddToContext(t *testing.T) {
+func TestOptions_InjectIntoContext(t *testing.T) {
 	opts := New()
 	opts.Set("a", "option", "value-a")
 	opts.Set("b", "option", "value-b")
 
-	ctx := opts.AddToContext(context.Background())
+	ctx := opts.InjectIntoContext(context.Background())
 
 	require.Equal(
 		t,
@@ -39,25 +39,25 @@ func TestOptions_AddToContext(t *testing.T) {
 	)
 }
 
-func Test_ApplyHeadersFromContext(t *testing.T) {
+func Test_InjectIntoHeadersFromContext(t *testing.T) {
 	opts := New()
 	opts.Set("a", "option", "value-a")
 	opts.Set("b", "option", "value-b")
-	ctx := opts.AddToContext(context.Background())
+	ctx := opts.InjectIntoContext(context.Background())
 
 	httpHeader := http.Header{}
-	ApplyHeadersFromContext(ctx, httpHeader)
+	InjectIntoHeadersFromContext(ctx, httpHeader)
 
 	require.Equal(t, "value-a", httpHeader.Get("x-service-a-option"))
 	require.Equal(t, "value-b", httpHeader.Get("x-service-b-option"))
 }
 
-func Test_ParseHeadersIntoContext(t *testing.T) {
+func Test_InjectIntoContextFromHeaders(t *testing.T) {
 	httpHeader := http.Header{}
 	httpHeader.Set("X-Service-A-Option", "value-a")
 	httpHeader.Set("x-service-b-option", "value-b")
 
-	ctx := ParseHeadersIntoContext(context.Background(), httpHeader)
+	ctx := InjectIntoContextFromHeaders(context.Background(), httpHeader)
 	require.Equal(
 		t,
 		Options{

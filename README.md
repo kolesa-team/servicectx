@@ -1,4 +1,4 @@
-## xoptions: an inter-service options exchange via HTTP headers
+## xoptions: custom context propagation across microservices through HTTP headers and/or OpenTelemetry
 
 [![Actions Status](https://github.com/kolesa-team/xoptions/workflows/test/badge.svg)](https://github.com/kolesa-team/xoptions/actions)
 [![codecov](https://codecov.io/gh/kolesa-team/xoptions/branch/main/graph/badge.svg?token=j7K2w57hif)](https://codecov.io/gh/kolesa-team/xoptions)
@@ -14,9 +14,15 @@ For example, if we want service `A` to ask service `B` to use a custom branch of
 When processing a request, service `B` must parse this header, apply its value within itself (say, reconfigure an HTTP client), and then also pass that header to every other service.
 This is not limited to branch names or URLs; any arbitrary option can be passed through such a header.
 
-**The library aims to standardize and automate this workflow. It handles parsing, reading and writing the options to/from `http.Header`, and passing them through `context`.** 
-Its implementation is tiny, and having a dedicated library for this purpose may seem an overkill. 
-However, having a standard way of doing the same thing is important in microservice ecosystem, where multiple projects have to cooperate efficiently. 
+The library aims to standardize and automate this workflow. 
+It handles parsing, reading and writing options to and from
+
+* custom HTTP headers (e.g. `x-service-api-branch: feature-123`)
+* query strings (e.g. `?x-service-api-version=2`)
+* OpenTelemetry or OpenTracing baggages
+* ...and `context.Context`
+
+This library is inspired in part by the article from DoorDash on [OpenTelemetry for custom context propagation](https://doordash.engineering/2021/06/17/leveraging-opentelemetry-for-custom-context-propagation/).
 
 ### Usage
 
@@ -25,7 +31,7 @@ However, having a standard way of doing the same thing is important in microserv
 import "github.com/kolesa-team/xoptions"
 
 func testHandler(w http.ResponseWriter, r *http.Request) {
-	options := xoptions.ParseHeaders(r.Header)
+	options := xoptions.FromHeaders(r.Header)
 
 	// read an API version from header, or use 1.0 by default
 	apiVersion := options.Get("api", "version", "1.0")
@@ -45,23 +51,26 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 import "github.com/kolesa-team/xoptions"
 
 func testHandlerWithContext(w http.ResponseWriter, r *http.Request) {
-	// parse inter-service options from headers and add them to a context.
+	// parse options from headers and add them to a context.
 	// it's ok if no special headers were sent: an empty struct is then used instead.
-	ctx := xoptions.ParseHeadersIntoContext(r.Context(), r.Header)
+	ctx := xoptions.InjectIntoContextFromHeaders(r.Context(), r.Header)
 
 	// a remoteCall is probably defined in another package;
 	// its `username` argument is a part of business logic,
 	// but inter-service options are passed in `ctx` as an ancillary data.
 	remoteCall := func(ctx context.Context, username string) string {
-            // inter-service options are retrieved from a context.
-            // the remote API address is taken from these options (or default URL is used instead). 
-            url := xoptions.FromContext(ctx).Get("api", "url", "http://api")
-
+            // options are retrieved from a context
+            opts := FromContext(ctx)
+            // the remote API address is taken from these options (or default URL is used instead).
+            url := opts.Get("api", "url", "http://api")
             url += "?username=" + username
+            apiRequest, _ := http.NewRequest("GET", url, nil)
+            // the options are propagated further within the headers
+            opts.InjectIntoHeaders(apiRequest.Header)
             // TODO: execute remote call
-            // http.Get(url)
-
-            return fmt.Sprintf("Remote API url: %s", url)
+            // _, _ = http.DefaultClient.Do(apiRequest)
+            
+            return fmt.Sprintf("Calling remote API at %s with headers:\n%+v", url, apiRequest.Header)
 	}
 
 	w.Write([]byte(remoteCall(ctx, r.URL.Query().Get("username"))))
@@ -69,11 +78,9 @@ func testHandlerWithContext(w http.ResponseWriter, r *http.Request) {
 ```
 
 ```shell
-$ curl http://localhost?username=Alex
-Remote API url: http://api?username=Alex
-
-$ curl --header "x-service-api-url: http://my-custom-api" http://localhost?username=Mary
-Remote API url: http://my-custom-api?username=Mary
+$ curl --header "x-service-api-url: http://my-custom-api" --header "x-service-billing-branch: hotfix-123" http://localhost?username=Mary
+Calling remote API at http://my-custom-api?username=Alex with headers:
+map[X-Service-Api-Url:[http://my-custom-api] X-Service-Billing-Branch:[hotfix-123]]
 ```
 
 #### Replacing branch name in URL
@@ -86,15 +93,14 @@ One typical use-case is dynamically replacing a branch name in a URL. The librar
 import "github.com/kolesa-team/xoptions"
 
 func testHandler(w http.ResponseWriter, r *http.Request) {
-	options := xoptions.ParseHeaders(r.Header)
+	options := xoptions.FromHeaders(r.Header)
 
 	// retrieve a `billing` service branch, or use `main` by  default
 	billingBranch := options.Get("billing", "branch", "main")
 	// replace `$branch` with billingBranch
 	billingUrl := xoptions.ReplaceUrlBranch("http://billing-$branch", billingBranch)
 	
-	// TODO: call billingUrl
-	fmt.Println(billingUrl)
+	fmt.Println(billingUrl)	
 	// curl --header "x-service-billing-branch: bugfix-123" http://localhost
 	// -> http://billing-bugfix-123
 	
@@ -125,14 +131,14 @@ fmt.Println(options.GetDuration("api", "timeout", time.Second))
 
 ### Advantages
 
-* A simple format. `x-service-{SERVICE_NAME}-{OPTION}` is trivially parsed in any programming language (if your services are written in other languages).
+* A simple option format. `x-service-{SERVICE_NAME}-{OPTION}` is trivially parsed in any programming language (if your services are written in other languages).
+* Can be used with [OpenTelemetry](https://github.com/open-telemetry/opentelemetry-go) or [OpenTracing](https://github.com/opentracing/opentracing-go).
 * No external dependencies.
 
 ### Limitations
 
 * Service names in `x-service-{SERVICE_NAME}-{OPTION}` must not contain `-` sign (which is used as a separator).
-The header format is not configurable for the sake of simplicity.
-* Only HTTP protocol and standard go library is supported. However, it is easy to add support for, say, `grpc` protocol or `fasthttp` webserver.
+The format is not configurable for the sake of simplicity.
 * The library can't "un-hardcode" your project configuration automagically. Overriding some options (such as URLs) per request is trivial in application code, and some (like database hosts) is not.
 * Clearly, accepting configuration from arbitrary headers is a security violation. An application code is responsible for disabling this functionality in production.
 

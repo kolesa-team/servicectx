@@ -22,17 +22,17 @@ func FromContext(ctx context.Context) Options {
 	return New()
 }
 
-// AddToContext adds options to the context
-func (opts Options) AddToContext(ctx context.Context) context.Context {
+// InjectIntoContext adds options to the context
+func (opts Options) InjectIntoContext(ctx context.Context) context.Context {
 	return context.WithValue(ctx, contextKeyOptions, opts)
 }
 
-// ParseHeadersIntoContext parses options from http.Header and adds them into context
-func ParseHeadersIntoContext(ctx context.Context, headers http.Header) context.Context {
-	return ParseHeaders(headers).AddToContext(ctx)
+// InjectIntoContextFromHeaders parses options from http.Header and adds them into context
+func InjectIntoContextFromHeaders(ctx context.Context, headers http.Header) context.Context {
+	return FromHeaders(headers).InjectIntoContext(ctx)
 }
 
-// ApplyHeadersFromContext adds options from context into http.Header
-func ApplyHeadersFromContext(ctx context.Context, header http.Header) {
-	FromContext(ctx).ApplyToHeaders(header)
+// InjectIntoHeadersFromContext adds options from context into http.Header
+func InjectIntoHeadersFromContext(ctx context.Context, header http.Header) {
+	FromContext(ctx).InjectIntoHeaders(header)
 }

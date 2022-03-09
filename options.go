@@ -5,6 +5,7 @@ package xoptions
 import (
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -13,6 +14,33 @@ type Values map[string]string
 
 // Options grouped by a service name
 type Options map[string]Values
+
+// NamePrefix a prefix at the beginning of an inter-service option
+const NamePrefix = "x-service"
+
+// ParseOptionName parses a string like "x-service-api-branch" into service name ("api"),
+// option name ("branch"), and a boolean success flag
+func ParseOptionName(name string) (serviceName, option string, ok bool) {
+	name = strings.ToLower(name)
+
+	if !strings.HasPrefix(name, NamePrefix) {
+		return "", "", false
+	}
+
+	name = strings.TrimPrefix(name, NamePrefix+"-")
+	parts := strings.SplitN(name, "-", 2)
+
+	if len(parts) < 2 {
+		return "", "", false
+	}
+
+	return parts[0], parts[1], true
+}
+
+// GetOptionName builds a string from service name and option name
+func GetOptionName(serviceName, option string) string {
+	return NamePrefix + "-" + serviceName + "-" + option
+}
 
 // New constructs a new options instance
 func New() Options {
@@ -83,12 +111,14 @@ func (opts Options) GetDuration(serviceName, option string, defaultValue time.Du
 }
 
 // Set sets an option value for a given service
-func (opts Options) Set(serviceName, option, value string) {
+func (opts Options) Set(serviceName, option, value string) Options {
 	if _, ok := opts[serviceName]; !ok {
 		opts[serviceName] = map[string]string{}
 	}
 
 	opts[serviceName][option] = value
+
+	return opts
 }
 
 // HeaderMap returns options as a map of HTTP headers
@@ -97,15 +127,15 @@ func (opts Options) HeaderMap() map[string]string {
 
 	for service, options := range opts {
 		for key, value := range options {
-			result[GetHeaderString(service, key)] = value
+			result[GetOptionName(service, key)] = value
 		}
 	}
 
 	return result
 }
 
-// ApplyToHeaders adds option headers to http.Header
-func (opts Options) ApplyToHeaders(headers http.Header) {
+// InjectIntoHeaders adds option headers to http.Header
+func (opts Options) InjectIntoHeaders(headers http.Header) {
 	for name, value := range opts.HeaderMap() {
 		headers.Set(name, value)
 	}

@@ -57,39 +57,39 @@ func TestOptionsByService_GetSet(t *testing.T) {
 	)
 }
 
-func TestParseServiceHeader(t *testing.T) {
+func TestParseOptionName(t *testing.T) {
 	tests := []struct {
 		name            string
-		header          string
+		option          string
 		wantServiceName string
 		wantOption      string
 		wantOk          bool
 	}{
 		{
-			name:   "empty header",
-			header: "",
+			name:   "empty option",
+			option: "",
 			wantOk: false,
 		},
 		{
-			name:   "header with no prefix",
-			header: "random-header",
+			name:   "option with no prefix",
+			option: "random-option",
 			wantOk: false,
 		},
 		{
-			name:   "incomplete header",
-			header: "x-service-abc",
+			name:   "incomplete option",
+			option: "x-service-abc",
 			wantOk: false,
 		},
 		{
-			name:            "valid header",
-			header:          "x-service-api-branch",
+			name:            "valid option",
+			option:          "x-service-api-branch",
 			wantServiceName: "api",
 			wantOption:      "branch",
 			wantOk:          true,
 		},
 		{
-			name:            "valid header with a complex option name",
-			header:          "x-service-api-timeout-milliseconds",
+			name:            "valid option with a complex option name",
+			option:          "x-service-api-timeout-milliseconds",
 			wantServiceName: "api",
 			wantOption:      "timeout-milliseconds",
 			wantOk:          true,
@@ -97,7 +97,7 @@ func TestParseServiceHeader(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotServiceName, gotOption, gotOk := ParseHeaderString(tt.header)
+			gotServiceName, gotOption, gotOk := ParseOptionName(tt.option)
 			if !tt.wantOk {
 				require.False(t, gotOk)
 				return
