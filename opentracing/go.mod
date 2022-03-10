@@ -5,7 +5,7 @@ go 1.17
 replace github.com/kolesa-team/servicectx => ../
 
 require (
-	github.com/kolesa-team/servicectx v0.0.0-00010101000000-000000000000
+	github.com/kolesa-team/servicectx v0.1.0
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/stretchr/testify v1.7.0
 )
