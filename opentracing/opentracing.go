@@ -12,8 +12,12 @@ func InjectIntoSpan(span opentracing.Span, opts servicectx.Options) {
 }
 
 func FromSpan(span opentracing.Span) servicectx.Options {
+	return FromSpanContext(span.Context())
+}
+
+func FromSpanContext(spanCtx opentracing.SpanContext) servicectx.Options {
 	opts := servicectx.New()
-	span.Context().ForeachBaggageItem(func(key, value string) bool {
+	spanCtx.ForeachBaggageItem(func(key, value string) bool {
 		serviceName, option, ok := servicectx.ParseOptionName(key)
 		if ok {
 			opts.Set(serviceName, option, value)

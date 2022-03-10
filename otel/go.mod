@@ -1,4 +1,4 @@
-module github.com/kolesa-team/servicectx/opentelemetry
+module github.com/kolesa-team/servicectx/otel
 
 go 1.17
 

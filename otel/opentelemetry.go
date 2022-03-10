@@ -1,4 +1,4 @@
-package opentelemetry
+package otel
 
 import (
 	"github.com/kolesa-team/servicectx"
