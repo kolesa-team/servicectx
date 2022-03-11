@@ -108,3 +108,23 @@ func TestParseOptionName(t *testing.T) {
 		})
 	}
 }
+
+func TestOptions_Merge(t *testing.T) {
+	a := New()
+	a.Set("a", "version", "1.0")
+	a.Set("b", "version", "2.0")
+
+	b := New()
+	b.Set("a", "version", "1.1")
+	b.Set("b", "branch", "feature-123")
+
+	require.Equal(
+		t,
+		map[string]string{
+			"x-service-a-version": "1.1",
+			"x-service-b-version": "2.0",
+			"x-service-b-branch":  "feature-123",
+		},
+		a.Merge(b).HeaderMap(),
+	)
+}

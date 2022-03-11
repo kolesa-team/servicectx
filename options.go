@@ -140,3 +140,14 @@ func (opts Options) InjectIntoHeaders(headers http.Header) {
 		headers.Set(name, value)
 	}
 }
+
+// Merge merges two sets of options. The receiver is modified and is returned for chaining.
+func (opts Options) Merge(other Options) Options {
+	for serviceName, values := range other {
+		for key, value := range values {
+			opts.Set(serviceName, key, value)
+		}
+	}
+
+	return opts
+}
