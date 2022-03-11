@@ -11,48 +11,47 @@ import (
 	"net/http/httptest"
 )
 
-// An an example HTTP client and server exchanging inter-service options through opentelemetry baggage
-func ExampleBaggage() {
-	options := servicectx.New()
-	options.Set("api", "url", "http://my-custom-api")
+// An example HTTP client and server exchanging custom properties through opentelemetry baggage
+func Example() {
+	// a client sends a request with a custom API url;
+	// this property is passed in HTTP headers as part of an opentelemetry baggage
+	props := servicectx.New()
+	props.Set("api", "url", "http://my-custom-api")
 
 	propagator := propagation.TextMapPropagator(propagation.Baggage{})
-	bag := InjectIntoBaggage(baggage.Baggage{}, options)
-	ctx := baggage.ContextWithBaggage(context.Background(), bag)
-
+	ctx := InjectIntoContext(context.Background(), props)
 	req := httptest.NewRequest(http.MethodGet, "/?username=Alex", nil)
 	propagator.Inject(ctx, propagation.HeaderCarrier(req.Header))
 
+	// a server handles this request, modifies the API url accordingly,
+	// and then also passes these custom properties in a remote call
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		// parse inter-service options from opentracing baggage and add them to a context.
-		ctx = propagator.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
+		// parse the properties from opentelemetry baggage and add them to a Go context for use in application code
+		ctx := propagator.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
 		bag := baggage.FromContext(ctx)
 		ctx = FromBaggage(bag).InjectIntoContext(ctx)
 
-		// a remoteCall is probably defined in another package;
+		// an apiCall is probably defined in another package;
 		// its `username` argument is a part of business logic,
-		// but inter-service options are passed in `ctx` as an ancillary data.
-		remoteCall := func(ctx context.Context, username string) string {
-			// inter-service options are retrieved from a context
-			opts := servicectx.FromContext(ctx)
-			// the remote API address is taken from these options (or default URL is used instead).
-			url := opts.Get("api", "url", "http://api")
+		// but properties, being an arbitrary ancillary data, are passed within the context.
+		apiCall := func(ctx context.Context, username string) string {
+			props := servicectx.FromContext(ctx)
+			// the remote API address is taken from these properties (or default URL is used instead).
+			url := props.Get("api", "url", "http://api")
 			url += "?username=" + username
 			apiRequest, _ := http.NewRequest("GET", url, nil)
 
-			// the options are propagated further through opentelemetry baggage
-			bag := baggage.FromContext(ctx)
-			bag = InjectIntoBaggage(bag, opts)
-			ctx = baggage.ContextWithBaggage(ctx, bag)
+			// the props are propagated further through opentelemetry baggage
 			propagator.Inject(ctx, propagation.HeaderCarrier(apiRequest.Header))
 
-			// TODO: execute remote call
+			// ...execute remote call
 			// _, _ = http.DefaultClient.Do(apiRequest)
 
-			return fmt.Sprintf("Calling remote API at %s with baggage %s", url, apiRequest.Header.Get("baggage"))
+			return fmt.Sprintf("Calling remote API at %s with baggage: %s", url, apiRequest.Header.Get("baggage"))
 		}
 
-		w.Write([]byte(remoteCall(ctx, r.URL.Query().Get("username"))))
+		apiCallResult := apiCall(ctx, r.URL.Query().Get("username"))
+		w.Write([]byte(apiCallResult))
 	}
 
 	w := httptest.NewRecorder()
@@ -63,5 +62,5 @@ func ExampleBaggage() {
 	fmt.Println(string(responseBytes))
 
 	// Output:
-	// Calling remote API at http://my-custom-api?username=Alex with baggage x-service-api-url=http%3A%2F%2Fmy-custom-api
+	// Calling remote API at http://my-custom-api?username=Alex with baggage: x-service-api-url=http%3A%2F%2Fmy-custom-api
 }

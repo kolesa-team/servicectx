@@ -8,28 +8,28 @@ import (
 	"net/http/httptest"
 )
 
-// An example HTTP client and server that exchange inter-service options through HTTP headers
-func ExampleFromHeaders() {
-	// a client defines some options to be sent to a server
-	options := New()
-	options.Set("api", "version", "1.0.1")
-	options.Set("billing", "branch", "bugfix-123")
+// An example HTTP client and server that exchange properties via HTTP headers
+func ExampleFromRequest() {
+	// a client defines some properties to be sent to a server
+	props := New()
+	props.Set("api", "version", "1.0.1")
+	props.Set("billing", "branch", "bugfix-123")
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	// insert the options into request headers
-	options.InjectIntoHeaders(req.Header)
+	// insert the props into request headers
+	props.InjectIntoHeaders(req.Header)
 
-	// a simple request handler that parses incoming inter-service options and prints them back to client
+	// a simple request handler that parses incoming properties and prints them back in response
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		options := FromHeaders(r.Header)
+		props := FromHeaders(r.Header)
 
 		// print an API version, or use a default version 1.0.0
-		w.Write([]byte(fmt.Sprintf("API version: %s\n", options.Get("api", "version", "1.0.0"))))
+		w.Write([]byte(fmt.Sprintf("API version: %s\n", props.Get("api", "version", "1.0.0"))))
 
-		// configure a billing service URL with a branch from headers, or use a default `main` branch
+		// configure a billing service URL with a custom branch, or use a default `main` branch
 		billingServiceUrl := ReplaceUrlBranch(
 			"http://billing-$branch",
-			options.Get("billing", "branch", "main"),
+			props.Get("billing", "branch", "main"),
 		)
 
 		w.Write([]byte(fmt.Sprintf("Billing service url: %s\n", billingServiceUrl)))
@@ -48,41 +48,43 @@ func ExampleFromHeaders() {
 	// Billing service url: http://billing-bugfix-123
 }
 
-// An example HTTP client and server where options are passed through `context.Context`
-func ExampleInjectIntoContextFromHeaders() {
-	options := New()
+// An example HTTP client and server, with properties exchanged internally through `context.Context`
+func ExampleInjectIntoContextFromRequest() {
+	props := New()
 	// the "api url" will be used by the handler below
-	options.Set("api", "url", "http://my-custom-api")
+	props.Set("api", "url", "http://my-custom-api")
 	// and the "billing branch" will just be passed downstream to the remote service
-	options.Set("billing", "branch", "hotfix-123")
+	props.Set("billing", "branch", "hotfix-123")
 
 	req := httptest.NewRequest(http.MethodGet, "/?username=Alex", nil)
-	options.InjectIntoHeaders(req.Header)
+	props.InjectIntoHeaders(req.Header)
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		// parse inter-service options from headers and add them to a context.
-		// it's ok if no special headers were sent: an empty struct is then used instead.
-		ctx := InjectIntoContextFromHeaders(r.Context(), r.Header)
+		// parse properties from request and add them to a context.
+		// it's ok if no special headers or query args were sent: an empty usable struct is then used instead.
+		ctx := InjectIntoContextFromRequest(r.Context(), r)
 
-		// a remoteCall is probably defined in another package;
+		// an apiCall is probably defined in another package;
 		// its `username` argument is a part of business logic,
-		// but inter-service options are passed in `ctx` as an ancillary data.
-		remoteCall := func(ctx context.Context, username string) string {
-			// options are retrieved from a context
-			opts := FromContext(ctx)
-			// the remote API address is taken from these options (or default URL is used instead).
-			url := opts.Get("api", "url", "http://api")
+		// but properties, being an arbitrary ancillary data, are passed within the context.
+		apiCall := func(ctx context.Context, username string) string {
+			// props are retrieved from a context
+			props := FromContext(ctx)
+			// the remote API address is taken from these props (or default URL is used instead).
+			url := props.Get("api", "url", "http://api")
 			url += "?username=" + username
 			apiRequest, _ := http.NewRequest("GET", url, nil)
-			// the options are propagated further within the headers
-			opts.InjectIntoHeaders(apiRequest.Header)
-			// TODO: execute remote call
+			// the properties are propagated further within the headers
+			props.InjectIntoHeaders(apiRequest.Header)
+
+			// ...execute remote call
 			// _, _ = http.DefaultClient.Do(apiRequest)
 
 			return fmt.Sprintf("Calling remote API at %s with headers:\n%+v", url, apiRequest.Header)
 		}
 
-		w.Write([]byte(remoteCall(ctx, r.URL.Query().Get("username"))))
+		// execute remote call and print the results back
+		w.Write([]byte(apiCall(ctx, r.URL.Query().Get("username"))))
 	}
 
 	w := httptest.NewRecorder()

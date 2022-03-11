@@ -6,30 +6,36 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
-func InjectIntoSpan(span opentracing.Span, opts servicectx.Options) {
-	for key, value := range opts.HeaderMap() {
+// InjectIntoSpan adds properties into span's baggage
+func InjectIntoSpan(span opentracing.Span, props servicectx.Properties) {
+	for key, value := range props.HeaderMap() {
 		span.SetBaggageItem(key, value)
 	}
 }
 
-func FromSpan(span opentracing.Span) servicectx.Options {
-	return FromSpanContext(span.Context())
-}
-
-func FromContextAndSpan(ctx context.Context, span opentracing.Span) servicectx.Options {
+// FromContextAndSpan retrieves properties from Go context and from span's context.
+// This is convenient when the properties can be set both in application code via context and from outside world by opentracing.
+// The properties from Go context have a preference over span's context.
+func FromContextAndSpan(ctx context.Context, span opentracing.Span) servicectx.Properties {
 	return FromSpan(span).Merge(servicectx.FromContext(ctx))
 }
 
-func FromSpanContext(spanCtx opentracing.SpanContext) servicectx.Options {
-	opts := servicectx.New()
+// FromSpan retrieves properties from span
+func FromSpan(span opentracing.Span) servicectx.Properties {
+	return FromSpanContext(span.Context())
+}
+
+// FromSpanContext retrieves properties from span's context
+func FromSpanContext(spanCtx opentracing.SpanContext) servicectx.Properties {
+	props := servicectx.New()
 	spanCtx.ForeachBaggageItem(func(key, value string) bool {
-		serviceName, option, ok := servicectx.ParseOptionName(key)
+		serviceName, option, ok := servicectx.ParsePropertyName(key)
 		if ok {
-			opts.Set(serviceName, option, value)
+			props.Set(serviceName, option, value)
 		}
 
 		return true
 	})
 
-	return opts
+	return props
 }

@@ -11,64 +11,68 @@ func TestFromContext(t *testing.T) {
 	emptyCtx := context.Background()
 	require.Equal(
 		t,
-		Options{},
+		Properties{},
 		FromContext(emptyCtx),
-		"an empty options struct must be returned from an empty context",
+		"an empty struct must be returned from an empty context",
 	)
 }
 
-func TestOptions_InjectIntoContext(t *testing.T) {
-	opts := New()
-	opts.Set("a", "option", "value-a")
-	opts.Set("b", "option", "value-b")
+func TestProperties_InjectIntoContext(t *testing.T) {
+	props := New()
+	props.Set("a", "property", "value-a")
+	props.Set("b", "property", "value-b")
 
-	ctx := opts.InjectIntoContext(context.Background())
+	ctx := props.InjectIntoContext(context.Background())
 
 	require.Equal(
 		t,
-		Options{
+		Properties{
 			"a": Values{
-				"option": "value-a",
+				"property": "value-a",
 			},
 			"b": Values{
-				"option": "value-b",
+				"property": "value-b",
 			},
 		},
 		FromContext(ctx),
-		"options must be successfully added to and retrieved from the context",
+		"properties must be successfully added to and retrieved from the context",
 	)
 }
 
 func Test_InjectIntoHeadersFromContext(t *testing.T) {
-	opts := New()
-	opts.Set("a", "option", "value-a")
-	opts.Set("b", "option", "value-b")
-	ctx := opts.InjectIntoContext(context.Background())
+	props := New()
+	props.Set("a", "property", "value-a")
+	props.Set("b", "property", "value-b")
+	ctx := props.InjectIntoContext(context.Background())
 
 	httpHeader := http.Header{}
 	InjectIntoHeadersFromContext(ctx, httpHeader)
 
-	require.Equal(t, "value-a", httpHeader.Get("x-service-a-option"))
-	require.Equal(t, "value-b", httpHeader.Get("x-service-b-option"))
+	require.Equal(t, "value-a", httpHeader.Get("x-service-a-property"))
+	require.Equal(t, "value-b", httpHeader.Get("x-service-b-property"))
 }
 
-func Test_InjectIntoContextFromHeaders(t *testing.T) {
-	httpHeader := http.Header{}
-	httpHeader.Set("X-Service-A-Option", "value-a")
-	httpHeader.Set("x-service-b-option", "value-b")
+func Test_InjectIntoContextFromRequest(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
+	req.Header.Set("X-Service-A-Option", "value-a")
+	req.Header.Set("x-service-b-option", "value-b")
+	req.URL.RawQuery = "x-service-c-option=value-c"
 
-	ctx := InjectIntoContextFromHeaders(context.Background(), httpHeader)
+	ctx := InjectIntoContextFromRequest(context.Background(), req)
 	require.Equal(
 		t,
-		Options{
+		Properties{
 			"a": Values{
 				"option": "value-a",
 			},
 			"b": Values{
 				"option": "value-b",
 			},
+			"c": Values{
+				"option": "value-c",
+			},
 		},
 		FromContext(ctx),
-		"options must be parsed from http.Header",
+		"properties must be parsed from http.Header",
 	)
 }

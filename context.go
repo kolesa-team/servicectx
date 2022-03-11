@@ -5,34 +5,34 @@ import (
 	"net/http"
 )
 
-// Utility functions for passing inter-service options between `http.Header` and `context.Context`
+// Utility functions for passing properties between `http.Header` and `context.Context`
 
 type contextKey string
 
 const contextKeyOptions = contextKey("servicectx")
 
-// FromContext returns options from context.
-// If there are no options in the context, an empty struct is returned.
-func FromContext(ctx context.Context) Options {
-	options, ok := ctx.Value(contextKeyOptions).(Options)
+// FromContext returns properties from context.
+// If there are no properties in the context, an empty usable instance is returned.
+func FromContext(ctx context.Context) Properties {
+	props, ok := ctx.Value(contextKeyOptions).(Properties)
 	if ok {
-		return options
+		return props
 	}
 
 	return New()
 }
 
-// InjectIntoContext adds options to the context
-func (opts Options) InjectIntoContext(ctx context.Context) context.Context {
-	return context.WithValue(ctx, contextKeyOptions, opts)
+// InjectIntoContext adds properties to the context
+func (p Properties) InjectIntoContext(ctx context.Context) context.Context {
+	return context.WithValue(ctx, contextKeyOptions, p)
 }
 
-// InjectIntoContextFromHeaders parses options from http.Header and adds them into context
-func InjectIntoContextFromHeaders(ctx context.Context, headers http.Header) context.Context {
-	return FromHeaders(headers).InjectIntoContext(ctx)
+// InjectIntoContextFromRequest parses properties from request and adds them into context
+func InjectIntoContextFromRequest(ctx context.Context, req *http.Request) context.Context {
+	return FromRequest(req).InjectIntoContext(ctx)
 }
 
-// InjectIntoHeadersFromContext adds options from context into http.Header
+// InjectIntoHeadersFromContext adds properties from context into http.Header
 func InjectIntoHeadersFromContext(ctx context.Context, header http.Header) {
 	FromContext(ctx).InjectIntoHeaders(header)
 }
