@@ -1,6 +1,7 @@
 package opentracing
 
 import (
+	"context"
 	"github.com/kolesa-team/servicectx"
 	"github.com/opentracing/opentracing-go"
 )
@@ -13,6 +14,10 @@ func InjectIntoSpan(span opentracing.Span, opts servicectx.Options) {
 
 func FromSpan(span opentracing.Span) servicectx.Options {
 	return FromSpanContext(span.Context())
+}
+
+func FromContextAndSpan(ctx context.Context, span opentracing.Span) servicectx.Options {
+	return FromSpan(span).Merge(servicectx.FromContext(ctx))
 }
 
 func FromSpanContext(spanCtx opentracing.SpanContext) servicectx.Options {

@@ -70,3 +70,24 @@ func ExampleInjectIntoBaggage() {
 	// Output:
 	// x-service-a-version=1.0,x-service-b-branch=feature-123
 }
+
+func TestFromContextAndBaggage(t *testing.T) {
+	// options in baggage
+	bag := baggage.Baggage{}
+	inputOpts := servicectx.New()
+	inputOpts.Set("a", "version", "1.0")
+	inputOpts.Set("b", "branch", "feature-123")
+	bag = InjectIntoBaggage(bag, inputOpts)
+
+	// options in regular Go context (these should have a priority over baggage)
+	ctxOpts := servicectx.New()
+	ctxOpts.Set("a", "version", "1.1")
+	ctx := ctxOpts.InjectIntoContext(context.Background())
+
+	parsedOpts := FromContextAndBaggage(ctx, bag)
+
+	require.True(t, parsedOpts.HasOption("a", "version"))
+	require.Equal(t, "1.1", parsedOpts.Get("a", "version", "9.9"))
+	require.True(t, parsedOpts.HasOption("b", "branch"))
+	require.Equal(t, "feature-123", parsedOpts.Get("b", "branch", "main"))
+}

@@ -5,7 +5,7 @@ go 1.17
 replace github.com/kolesa-team/servicectx => ../
 
 require (
-	github.com/kolesa-team/servicectx v0.1.0
+	github.com/kolesa-team/servicectx v0.1.1-0.20220311063942-2e3c1782177a
 	github.com/stretchr/testify v1.7.0
 	go.opentelemetry.io/otel v1.4.1
 )

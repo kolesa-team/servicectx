@@ -1,6 +1,7 @@
 package otel
 
 import (
+	"context"
 	"github.com/kolesa-team/servicectx"
 	"go.opentelemetry.io/otel/baggage"
 )
@@ -41,4 +42,8 @@ func FromBaggage(bag baggage.Baggage) servicectx.Options {
 	}
 
 	return opts
+}
+
+func FromContextAndBaggage(ctx context.Context, bag baggage.Baggage) servicectx.Options {
+	return FromBaggage(bag).Merge(servicectx.FromContext(ctx))
 }
