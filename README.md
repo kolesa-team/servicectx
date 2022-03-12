@@ -1,7 +1,7 @@
 ## servicectx: custom context propagation across microservices through HTTP headers, query strings, and OpenTelemetry
 
 [![Actions Status](https://github.com/kolesa-team/servicectx/workflows/test/badge.svg)](https://github.com/kolesa-team/servicectx/actions)
-[![codecov](https://codecov.io/gh/kolesa-team/servicectx/branch/main/graph/badge.svg?token=j7K2w57hif)](https://codecov.io/gh/kolesa-team/servicectx)
+[![codecov](https://codecov.io/gh/kolesa-team/servicectx/branch/main/graph/badge.svg?token=I1RSBVVXD5)](https://codecov.io/gh/kolesa-team/servicectx)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kolesa-team/servicectx)](https://goreportcard.com/report/github.com/kolesa-team/servicectx)
 
 A common issue in (micro)services architecture is exchanging and overriding some arbitrary properties across the service chain.
@@ -17,7 +17,8 @@ This library aims to ease the inter-service communication, development, and test
   * OpenTelemetry/OpenTracing baggage
   * `context.Context`, within a single Go process / request handler 
   
-Why would someone need that? One notable use-case is dynamic routing. 
+### Use cases
+One notable use case is dynamic routing. 
 Say you're developing a new version of a billing service `http://billing-v2` that is usually called by the backend at `http://billing-v1`. With `servicectx`, you can conveniently propagate a custom billing URL without modifying the backend or user interface:
 * First, find a way to pass a custom billing URL to the backend. 
   * If using a web page, add a query parameter `?x-service-billing-url=billing-v2` or `x-service-billing-url: billing-v2` header (some browser extensions can help).
@@ -99,7 +100,7 @@ map[X-Service-Api-Url:[http://my-custom-api] X-Service-Billing-Branch:[hotfix-12
 
 #### Dynamic routing: replacing branch name in URL
 
-One typical use-case for custom context is a dynamic replacement of branch names in URLs. The library offers a helper function to make URLs easily configurable:
+Another typical scenario is dynamic replacement of branch names in URLs. The library offers a helper function to make URLs easily configurable:
 
 * Say, the project calls `http://billing-main` by default, where `main` is a branch name. 
 * We propose to store that address as `http://billing-$branch` instead, where `$branch` is a placeholder to be replaced.
