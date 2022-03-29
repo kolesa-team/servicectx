@@ -44,6 +44,18 @@ func TestPropertiesByService_GetSet(t *testing.T) {
 		"a valid numeric string must be converted to integer",
 	)
 
+	props.Set("billing", "enabled", "true")
+	require.Equal(
+		t,
+		true,
+		props.GetBool(
+			"billing",
+			"upload",
+			false,
+		),
+		"a string must be converted to boolean",
+	)
+
 	props.Set("api", "host", "test-host")
 	require.Equal(
 		t,

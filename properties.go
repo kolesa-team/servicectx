@@ -96,7 +96,7 @@ func (p Properties) GetInt(serviceName, prop string, defaultValue int) int {
 	return value
 }
 
-// GetDuration returns an property value for a given service as time.Duration
+// GetDuration returns a property value for a given service as time.Duration
 func (p Properties) GetDuration(serviceName, prop string, defaultValue time.Duration) time.Duration {
 	valueStr := p.Get(serviceName, prop, "")
 	if len(valueStr) == 0 {
@@ -111,7 +111,22 @@ func (p Properties) GetDuration(serviceName, prop string, defaultValue time.Dura
 	return value
 }
 
-// Set sets an property value for a given service
+// GetBool returns a property value for a given service as boolean
+func (p Properties) GetBool(serviceName, prop string, defaultValue bool) bool {
+	valueStr := p.Get(serviceName, prop, "")
+	if len(valueStr) == 0 {
+		return defaultValue
+	}
+
+	value, err := strconv.ParseBool(valueStr)
+	if err != nil {
+		return defaultValue
+	}
+
+	return value
+}
+
+// Set sets a property value for a given service
 func (p Properties) Set(serviceName, prop, value string) Properties {
 	if _, ok := p[serviceName]; !ok {
 		p[serviceName] = map[string]string{}
