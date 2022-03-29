@@ -50,7 +50,7 @@ func TestPropertiesByService_GetSet(t *testing.T) {
 		true,
 		props.GetBool(
 			"billing",
-			"upload",
+			"enabled",
 			false,
 		),
 		"a string must be converted to boolean",
@@ -64,6 +64,7 @@ func TestPropertiesByService_GetSet(t *testing.T) {
 			"x-service-billing-timeout":   "3s",
 			"x-service-api-host":          "test-host",
 			"x-service-billing-max-value": "100500",
+			"x-service-billing-enabled":   "true",
 		},
 		props.HeaderMap(),
 	)
