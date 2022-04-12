@@ -50,12 +50,14 @@ func New() Properties {
 
 // HasService checks if there are options for a given service
 func (p Properties) HasService(serviceName string) bool {
+	serviceName = sanitizeServiceName(serviceName)
 	_, ok := p[serviceName]
 	return ok
 }
 
 // HasProperty checks if a given property exists for a service
 func (p Properties) HasProperty(serviceName, option string) bool {
+	serviceName = sanitizeServiceName(serviceName)
 	if service, ok := p[serviceName]; ok {
 		if _, ok := service[option]; ok {
 			return true
@@ -67,11 +69,14 @@ func (p Properties) HasProperty(serviceName, option string) bool {
 
 // GetByService returns all options for a given service
 func (p Properties) GetByService(serviceName string) Values {
+	serviceName = sanitizeServiceName(serviceName)
+
 	return p[serviceName]
 }
 
 // Get returns an property value for a given service
 func (p Properties) Get(serviceName, prop, defaultValue string) string {
+	serviceName = sanitizeServiceName(serviceName)
 	if service, ok := p[serviceName]; ok {
 		if value, ok := service[prop]; ok {
 			return value
@@ -128,6 +133,7 @@ func (p Properties) GetBool(serviceName, prop string, defaultValue bool) bool {
 
 // Set sets a property value for a given service
 func (p Properties) Set(serviceName, prop, value string) Properties {
+	serviceName = sanitizeServiceName(serviceName)
 	if _, ok := p[serviceName]; !ok {
 		p[serviceName] = map[string]string{}
 	}
@@ -166,4 +172,10 @@ func (p Properties) Merge(other Properties) Properties {
 	}
 
 	return p
+}
+
+// removes dashes from service names,
+// so that "my-service" and "myservice" are treated equally.
+func sanitizeServiceName(name string) string {
+	return strings.ReplaceAll(name, "-", "")
 }

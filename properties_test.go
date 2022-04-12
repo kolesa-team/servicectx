@@ -68,6 +68,16 @@ func TestPropertiesByService_GetSet(t *testing.T) {
 		},
 		props.HeaderMap(),
 	)
+
+	// service names with dashes
+	props.Set("my-service", "test-option", "test-value")
+	require.True(t, props.HasService("my-service"))
+	require.True(t, props.HasService("myservice"))
+	require.Equal(t, "test-value", props.Get("myservice", "test-option", ""))
+	require.Equal(t, "test-value", props.Get("my-service", "test-option", ""))
+
+	props.Set("my-service", "test-option", "new-value")
+	require.Equal(t, "new-value", props.Get("myservice", "test-option", ""))
 }
 
 func TestParseOptionName(t *testing.T) {
